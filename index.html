@@ -1,0 +1,322 @@
+<!-- AI Arcade: Nature + Neon Dynamic Style -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>🔥 AI Arcade</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+  --neon-glow: 0 0 10px #ff5722, 0 0 20px #ff9800, 0 0 30px #ffc107;
+}
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #000;
+      color: #ffae42;
+      text-align: center;
+      transition: background 1s ease;
+    }
+    body.light-mode {
+      background: #e0f7fa;
+      color: #212121;
+    }
+    body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background: url('https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcXkxNzUzazg1eXdtZGg1YjR5Y2thbXZyODd6NzVxdm1ncHh4MmxvYiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/f3iwJFOVOwuy7K6FFw/giphy.gif') center center / cover no-repeat;
+  opacity: 0.4;
+  pointer-events: none;
+  animation: fadeScene 10s ease-in-out infinite alternate;
+}
+    body.light-mode::before {
+  background: url('https://media.giphy.com/media/QBd2kLB5qDmysEXre9/giphy.gif') center center / cover no-repeat;
+  opacity: 0.35;
+  animation: fadeScene 12s ease-in-out infinite alternate;
+}
+    @keyframes fadeScene {
+      0% { opacity: 0.2; }
+      100% { opacity: 0.4; }
+    }
+    h1 {
+  margin-top: 2rem;
+  color: #ff5722;
+  text-shadow: var(--neon-glow);
+  font-size: 3rem;
+  animation: pulse 2s infinite;
+}
+    @keyframes pulse {
+  0% { text-shadow: var(--neon-glow); }
+  50% { text-shadow: 0 0 5px #ff6f00; }
+  100% { text-shadow: var(--neon-glow); }
+}
+      50% { text-shadow: 0 0 5px #0ff; }
+      100% { text-shadow: var(--neon-glow); }
+    }
+    .toolbar {
+      margin: 1rem 0;
+    }
+    .toolbar select, .toolbar button {
+  padding: 0.6rem 1.2rem;
+  margin: 0.5rem;
+  font-size: 1rem;
+  border: none;
+  border-radius: 12px;
+  background: #ff6f00;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 0 10px #ff5722;
+  transition: transform 0.2s, box-shadow 0.3s;
+}
+    .toolbar button:hover, .toolbar select:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px #ff5722, 0 0 25px #ffc107;
+}
+    .board {
+      display: grid;
+      justify-content: center;
+      gap: 10px;
+      margin: 2rem auto;
+    }
+    .cell, .card, .tile, .sudoku-cell {
+  width: 70px;
+  height: 70px;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ff6f00;
+  background: #111;
+  color: #ffc107;
+  border-radius: 10px;
+  box-shadow: 0 0 8px #ff9800;
+  transition: transform 0.2s ease;
+}
+    .cell:hover, .card:hover, .tile:hover, .sudoku-cell:hover {
+      transform: scale(1.08);
+    }
+    body.light-mode .cell, body.light-mode .card, body.light-mode .tile, body.light-mode .sudoku-cell {
+      background: #fff;
+      color: #222;
+      border-color: #009688;
+      box-shadow: 0 0 6px #4dd0e1;
+    }
+    .sudoku-cell input {
+      width: 100%;
+      height: 100%;
+      text-align: center;
+      font-size: 1.5rem;
+      border: none;
+      background: transparent;
+      color: inherit;
+    }
+    .status {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: #fff;
+  text-shadow: 0 0 8px #ff5722;
+}
+  </style>
+</head>
+<body>
+  <h1>🔥 AI Arcade</h1>
+  <div class="toolbar">
+    <select id="gameSelect" onchange="switchGame()">
+      <option value="tictactoe">Tic-Tac-Toe</option>
+      <option value="memory">Memory Match</option>
+      <option value="sudoku">Sudoku</option>
+      <option value="pattern">Pattern Memory</option>
+    </select>
+    <button onclick="restartGame()">🔁 Restart</button>
+    <button onclick="toggleTheme()">🌓 Theme</button>
+    <button id="extraBtn" onclick="extraAction()">💡 Hint/Replay</button>
+  </div>
+  <div class="status" id="status"></div>
+  <div class="board" id="board"></div>
+<script>
+const boardEl = document.getElementById("board");
+const statusEl = document.getElementById("status");
+const extraBtn = document.getElementById("extraBtn");
+let currentGame = "tictactoe";
+let pattern = [];
+
+function toggleTheme() {
+  document.body.classList.toggle("light-mode");
+}
+
+function switchGame() {
+  currentGame = document.getElementById("gameSelect").value;
+  restartGame();
+}
+
+function restartGame() {
+  boardEl.innerHTML = "";
+  statusEl.textContent = "";
+  if (currentGame === "tictactoe") loadTicTacToe();
+  else if (currentGame === "memory") loadMemoryMatch();
+  else if (currentGame === "sudoku") loadSudoku();
+  else if (currentGame === "pattern") loadPatternMemory();
+}
+
+function extraAction() {
+  if (currentGame === "memory") showMemoryHint();
+  else if (currentGame === "sudoku") showSudokuHint();
+  else if (currentGame === "pattern") replayPattern();
+  else statusEl.textContent = "No extra actions for this game.";
+}
+
+function loadTicTacToe() {
+  let board = Array(9).fill(null);
+  let gameOver = false;
+  boardEl.style.gridTemplateColumns = "repeat(3, 70px)";
+  board.forEach((_, i) => {
+    const cell = document.createElement("div");
+    cell.className = "cell";
+    cell.onclick = () => {
+      if (gameOver || board[i]) return;
+      board[i] = "X";
+      cell.textContent = "X";
+      if (checkWin(board, "X")) return end("You win!");
+      const ai = bestMove(board);
+      if (ai !== undefined) {
+        board[ai] = "O";
+        boardEl.children[ai].textContent = "O";
+        if (checkWin(board, "O")) return end("AI wins!");
+      }
+      if (board.every(Boolean)) end("Draw!");
+    };
+    boardEl.appendChild(cell);
+  });
+  function end(msg) { gameOver = true; statusEl.textContent = msg; }
+  function checkWin(b, p) {
+    return [0,1,2,3,4,5,6,7].some(i => [
+      [0,1,2],[3,4,5],[6,7,8],[0,3,6],
+      [1,4,7],[2,5,8],[0,4,8],[2,4,6]
+    ][i].every(j => b[j] === p));
+  }
+  function bestMove(b) {
+    let best = -Infinity, move;
+    b.forEach((_, i) => {
+      if (!b[i]) {
+        b[i] = "O";
+        let score = minimax(b, 0, false);
+        b[i] = null;
+        if (score > best) best = score, move = i;
+      }
+    });
+    return move;
+  }
+  function minimax(b, d, max) {
+    if (checkWin(b, "O")) return 1;
+    if (checkWin(b, "X")) return -1;
+    if (b.every(Boolean)) return 0;
+    if (max) {
+      let best = -Infinity;
+      b.forEach((_, i) => { if (!b[i]) { b[i] = "O"; best = Math.max(best, minimax(b, d+1, false)); b[i] = null; } });
+      return best;
+    } else {
+      let best = Infinity;
+      b.forEach((_, i) => { if (!b[i]) { b[i] = "X"; best = Math.min(best, minimax(b, d+1, true)); b[i] = null; } });
+      return best;
+    }
+  }
+}
+
+function loadMemoryMatch() {
+  const emojis = ["🔥", "🌟", "⚡", "🎯"];
+  const cards = [...emojis, ...emojis].sort(() => 0.5 - Math.random());
+  let selected = [], matched = [];
+  boardEl.style.gridTemplateColumns = "repeat(4, 70px)";
+  cards.forEach((e, i) => {
+    const div = document.createElement("div");
+    div.className = "card";
+    div.onclick = () => {
+      if (matched.includes(i) || selected.includes(i)) return;
+      div.textContent = e;
+      selected.push(i);
+      if (selected.length === 2) {
+        const [a, b] = selected;
+        setTimeout(() => {
+          if (cards[a] === cards[b]) matched.push(a, b);
+          else {
+            boardEl.children[a].textContent = "";
+            boardEl.children[b].textContent = "";
+          }
+          selected = [];
+        }, 600);
+      }
+    };
+    boardEl.appendChild(div);
+  });
+  statusEl.textContent = "Find the matching pairs!";
+}
+
+function showMemoryHint() {
+  const cards = boardEl.querySelectorAll(".card");
+  for (let i = 0; i < cards.length; i++) {
+    for (let j = i + 1; j < cards.length; j++) {
+      if (cards[i].textContent === cards[j].textContent && cards[i].textContent !== "") {
+        cards[i].style.background = "green";
+        cards[j].style.background = "green";
+        statusEl.textContent = "💡 Match Highlighted!";
+        return;
+      }
+    }
+  }
+}
+
+function loadSudoku() {
+  boardEl.style.gridTemplateColumns = "repeat(4, 70px)";
+  for (let i = 0; i < 16; i++) {
+    const cell = document.createElement("div");
+    cell.className = "sudoku-cell";
+    const input = document.createElement("input");
+    input.maxLength = 1;
+    cell.appendChild(input);
+    boardEl.appendChild(cell);
+  }
+  statusEl.textContent = "Fill the grid with numbers 1–4";
+}
+
+function showSudokuHint() {
+  const inputs = boardEl.querySelectorAll(".sudoku-cell input");
+  for (const input of inputs) {
+    if (!input.value) {
+      input.value = Math.floor(Math.random() * 4) + 1;
+      input.style.color = "#7fff7f";
+      statusEl.textContent = "💡 Hint filled!";
+      return;
+    }
+  }
+}
+
+function loadPatternMemory() {
+  boardEl.style.gridTemplateColumns = "repeat(3, 70px)";
+  pattern = Array.from({ length: 9 }, () => Math.random() > 0.5);
+  pattern.forEach((val, i) => {
+    const tile = document.createElement("div");
+    tile.className = "tile";
+    tile.textContent = val ? "★" : "";
+    setTimeout(() => tile.textContent = "", 1000);
+    boardEl.appendChild(tile);
+  });
+  statusEl.textContent = "Remember the pattern!";
+}
+
+function replayPattern() {
+  boardEl.childNodes.forEach((tile, i) => {
+    tile.textContent = pattern[i] ? "★" : "";
+    setTimeout(() => (tile.textContent = ""), 1000);
+  });
+  statusEl.textContent = "🔁 Pattern replayed!";
+}
+
+restartGame();
+</script>
+</body>
+</html>
